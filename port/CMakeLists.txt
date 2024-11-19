@@ -42,3 +42,20 @@ target_include_directories(TIMER_FILES PUBLIC
 target_link_libraries(TIMER_FILES PRIVATE
         pico_stdlib      
         )
+
+# SNMP
+add_library(SNMP_FILES STATIC)
+
+target_sources(SNMP_FILES PUBLIC
+        ${PORT_DIR}/snmp/src/snmp.c
+        ${PORT_DIR}/snmp/src/snmp_custom.c
+        )
+
+target_include_directories(SNMP_FILES PUBLIC
+        ${PORT_DIR}
+        ${PORT_DIR}/snmp/inc
+        )
+
+target_link_libraries(SNMP_FILES PRIVATE
+        ETHERNET_FILES
+        )

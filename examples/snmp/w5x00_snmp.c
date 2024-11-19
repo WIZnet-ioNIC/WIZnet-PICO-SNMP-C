@@ -10,18 +10,13 @@
  * ----------------------------------------------------------------------------------------------------
  */
 #include <stdio.h>
-#include <string.h>
 
 #include "port_common.h"
 
 #include "wizchip_conf.h"
 #include "w5x00_spi.h"
 
-#include "mqtt_interface.h"
-#include "MQTTClient.h"
-
-#include "timer.h"
-#include "time.h"
+#include "snmp_custom.h" // Use snmp
 
 /**
  * ----------------------------------------------------------------------------------------------------
@@ -35,20 +30,13 @@
 #define ETHERNET_BUF_MAX_SIZE (1024 * 2)
 
 /* Socket */
-#define SOCKET_MQTT 0
+#define SOCKET_SNMP 0
 
-/* Port */
-#define PORT_MQTT 1883
-
-/* Timeout */
-#define DEFAULT_TIMEOUT 1000 // 1 second
-
-/* MQTT */
-#define MQTT_CLIENT_ID "rpi-pico"
-#define MQTT_USERNAME "wiznet"
-#define MQTT_PASSWORD "0123456789"
-#define MQTT_SUBSCRIBE_TOPIC "subscribe_topic"
-#define MQTT_KEEP_ALIVE 60 // 60 milliseconds
+#if (DEVICE_BOARD_NAME == W55RP20_EVB_PICO)
+#define USER_LED_PIN 19
+#else
+#define USER_LED_PIN 25
+#endif
 
 /**
  * ----------------------------------------------------------------------------------------------------
@@ -63,23 +51,15 @@ static wiz_NetInfo g_net_info =
         .sn = {255, 255, 255, 0},                    // Subnet Mask
         .gw = {192, 168, 11, 1},                     // Gateway
         .dns = {8, 8, 8, 8},                         // DNS server
-        .dhcp = NETINFO_STATIC                       // DHCP enable/disable
+        .dhcp = NETINFO_STATIC                        // DHCP enable/disable
 };
 
-/* MQTT */
-static uint8_t g_mqtt_send_buf[ETHERNET_BUF_MAX_SIZE] = {
+static uint8_t g_ethernet_buf[ETHERNET_BUF_MAX_SIZE] = {
     0,
-};
-static uint8_t g_mqtt_recv_buf[ETHERNET_BUF_MAX_SIZE] = {
-    0,
-};
-static uint8_t g_mqtt_broker_ip[4] = {192, 168, 11, 3};
-static Network g_mqtt_network;
-static MQTTClient g_mqtt_client;
-static MQTTPacket_connectData g_mqtt_packet_connect_data = MQTTPacket_connectData_initializer;
+}; // common buffer
 
-/* Timer  */
-static void repeating_timer_callback(void);
+/* SNMP */
+uint8_t manager[4] = {192, 168, 11, 162}; // manager ip, (is your pc ip or others managers)
 
 /**
  * ----------------------------------------------------------------------------------------------------
@@ -89,8 +69,10 @@ static void repeating_timer_callback(void);
 /* Clock */
 static void set_clock_khz(void);
 
-/* MQTT */
-static void message_arrived(MessageData *msg_data);
+void UserLED_Init(void);
+void getUserLEDStatus(void *ptr, uint8_t *len);
+void setUserLEDStatus(int32_t val);
+bool precess_snmp_time_handle(struct repeating_timer *t);
 
 /**
  * ----------------------------------------------------------------------------------------------------
@@ -99,13 +81,17 @@ static void message_arrived(MessageData *msg_data);
  */
 int main()
 {
+
+    struct repeating_timer timer;
+
     /* Initialize */
-    int32_t retval = 0;
+    int retval = 0;
+    uint8_t dhcp_retry = 0;
+    uint8_t dns_retry = 0;
 
     set_clock_khz();
 
     stdio_init_all();
-
     wizchip_spi_initialize();
     wizchip_cris_initialize();
 
@@ -113,72 +99,22 @@ int main()
     wizchip_initialize();
     wizchip_check();
 
-    wizchip_1ms_timer_initialize(repeating_timer_callback);
+    add_repeating_timer_ms(10, precess_snmp_time_handle, NULL, &timer);  // Add SNMP 10ms Tick Timer handler
 
     network_initialize(g_net_info);
 
     /* Get network information */
     print_network_information(g_net_info);
+    
+    UserLED_Init();
+    setUserLEDStatus(0);
 
-    NewNetwork(&g_mqtt_network, SOCKET_MQTT);
-
-    retval = ConnectNetwork(&g_mqtt_network, g_mqtt_broker_ip, PORT_MQTT);
-
-    if (retval != 1)
-    {
-        printf(" Network connect failed\n");
-
-        while (1)
-            ;
-    }
-
-    /* Initialize MQTT client */
-    MQTTClientInit(&g_mqtt_client, &g_mqtt_network, DEFAULT_TIMEOUT, g_mqtt_send_buf, ETHERNET_BUF_MAX_SIZE, g_mqtt_recv_buf, ETHERNET_BUF_MAX_SIZE);
-
-    /* Connect to the MQTT broker */
-    g_mqtt_packet_connect_data.MQTTVersion = 3;
-    g_mqtt_packet_connect_data.cleansession = 1;
-    g_mqtt_packet_connect_data.willFlag = 0;
-    g_mqtt_packet_connect_data.keepAliveInterval = MQTT_KEEP_ALIVE;
-    g_mqtt_packet_connect_data.clientID.cstring = MQTT_CLIENT_ID;
-    g_mqtt_packet_connect_data.username.cstring = MQTT_USERNAME;
-    g_mqtt_packet_connect_data.password.cstring = MQTT_PASSWORD;
-
-    retval = MQTTConnect(&g_mqtt_client, &g_mqtt_packet_connect_data);
-
-    if (retval < 0)
-    {
-        printf(" MQTT connect failed : %d\n", retval);
-
-        while (1)
-            ;
-    }
-
-    printf(" MQTT connected\n");
-
-    /* Subscribe */
-    retval = MQTTSubscribe(&g_mqtt_client, MQTT_SUBSCRIBE_TOPIC, QOS0, message_arrived);
-
-    if (retval < 0)
-    {
-        printf(" Subscribe failed : %d\n", retval);
-
-        while (1)
-            ;
-    }
-
-    printf(" Subscribed\n");
+    snmpd_init(manager, g_net_info.ip, SOCKET_SNMP, SOCKET_SNMP + 1); // Initialize snmp
 
     /* Infinite loop */
     while (1)
     {
-        if ((retval = MQTTYield(&g_mqtt_client, g_mqtt_packet_connect_data.keepAliveInterval)) < 0)
-        {
-            printf(" Yield error : %d\n", retval);
-
-            while (1)
-                ;
-        }
+        snmpd_run();
     }
 }
 
@@ -203,16 +139,31 @@ static void set_clock_khz(void)
     );
 }
 
-/* MQTT */
-static void message_arrived(MessageData *msg_data)
+bool precess_snmp_time_handle(struct repeating_timer *t)
 {
-    MQTTMessage *message = msg_data->message;
-
-    printf("%.*s", (uint32_t)message->payloadlen, (uint8_t *)message->payload);
+    SNMP_time_handler(); // SNMP 10ms Tick Timer handler
 }
 
-/* Timer */
-static void repeating_timer_callback(void)
+void UserLED_Init()
 {
-    MilliTimer_Handler();
+    gpio_init(USER_LED_PIN);                                  // Initialize LED
+    gpio_set_dir(USER_LED_PIN, GPIO_OUT);                     // Output mode
+    UserLED_Control_init(getUserLEDStatus, setUserLEDStatus); // Pass control control function
+}
+
+void getUserLEDStatus(void *ptr, uint8_t *len)
+{
+    uint8_t led_status = 0;
+
+    led_status = gpio_get(USER_LED_PIN);
+
+    *len = sprintf((char *)ptr, "USER LED(green) [%s]. ", led_status ? "On" : "Off");
+}
+
+void setUserLEDStatus(int32_t val)
+{
+    if (val == 0)
+        gpio_put(USER_LED_PIN, 0);
+    else
+        gpio_put(USER_LED_PIN, 1);
 }
