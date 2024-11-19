@@ -81,13 +81,7 @@ bool precess_snmp_time_handle(struct repeating_timer *t);
  */
 int main()
 {
-
     struct repeating_timer timer;
-
-    /* Initialize */
-    int retval = 0;
-    uint8_t dhcp_retry = 0;
-    uint8_t dns_retry = 0;
 
     set_clock_khz();
 

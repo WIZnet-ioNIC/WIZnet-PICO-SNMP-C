@@ -1,15 +1,3 @@
-# Getting Started with Ethernet Examples
-
-These sections will guide you through a series of steps from configuring development environment to running ethernet examples using the **WIZnet's ethernet products**.
-
-- [**Development environment configuration**](#development_environment_configuration)
-- [**Hardware requirements**](#hardware_requirements)
-- [**Ethernet example structure**](#ethernet_example_structure)
-- [**Ethernet example testing**](#ethernet_example_testing)
-- [**How to use port directory**](#how_to_use_port_directory)
-
-
-
 <a name="development_environment_configuration"></a>
 ## Development environment configuration
 
@@ -35,53 +23,9 @@ The ethernet examples use **Raspberry Pi Pico** and **WIZnet Ethernet HAT** - et
 - [**W5100S-EVB-Pico2**][link-w5100s-evb-pico2]
 - [**W5500-EVB-Pico2**][link-w5500-evb-pico2]
 
-<a name="ethernet_example_structure"></a>
-## Ethernet example structure
-
-Examples are available at '**WIZnet-PICO-C/examples/**' directory. As of now, following examples are provided.
-
-- [**DHCP & DNS**][link-dhcp_dns]
-- [**FTP**][link-ftp]
-	- [**Client**][link-ftp_client]
-	- [**Server**][link-ftp_server]
-- [**HTTP**][link-http]
-	- [**Server**][link-http_server]
-- [**Loopback**][link-loopback]
-- [**MQTT**][link-mqtt]
-	- [**Publish**][link-mqtt_publish]
-	- [**Publish & Subscribe**][link-mqtt_publish_subscribe]
-	- [**Subscribe**][link-mqtt_subscribe]
-- [**SNTP**][link-sntp]
-- [**TCP Client over SSL**][link-tcp_client_over_ssl]
-
-Note that **ioLibrary_Driver**, **mbedtls**, **pico-sdk** are needed to run ethernet examples.
-
-- **ioLibrary_Driver** library is applicable to WIZnet's W5x00 ethernet chip.
-- **mbedtls** library supports additional algorithms and support related to SSL and TLS connections.
-- **pico-sdk** is made available by Pico to enable developers to build software applications for the Pico platform.
-
-Libraries are located in the '**WIZnet-PICO-C/libraries/**' directory.
-
-- [**ioLibrary_Driver**][link-iolibrary_driver]
-- [**mbedtls**][link-mbedtls]
-- [**pico-sdk**][link-pico_sdk]
-
-If you want to modify the code that MCU-dependent and use a MCU other than **RP2040**, you can modify it in the '**WIZnet-PICO-C/port/**' directory.
-
-port is located in the '**WIZnet-PICO-C/port/**' directory.
-
-- [**ioLibrary_Driver**][link-port_iolibrary_driver]
-- [**mbedtls**][link-port_mbedtls]
-- [**timer**][link-port_timer]
-
-The structure of this WIZnet-PICO-C 2.0.0 version or higher has changed a lot compared to the previous version. If you want to refer to the previous version, please refer to the link below.
-
-- [**WIZnet-PICO-C 1.0.0 version**][link-wiznet_pico_c_1_0_0_version]
-
-
 
 <a name="ethernet_example_testing"></a>
-## Ethernet example testing
+# SNMP example testing
 
 1. Download
 
@@ -96,7 +40,7 @@ cd [user path]
 cd D:/WIZnet-PICO
 
 /* Clone */
-git clone --recurse-submodules https://github.com/Wiznet/WIZnet-PICO-C.git
+git clone --recurse-submodules https://github.com/Wiznet/WIZnet-PICO-SNMP-C.git
 ```
 
 With Visual Studio Code, the library set as a submodule is automatically downloaded, so it doesn't matter whether the library set as a submodule is an empty directory or not, so refer to it.
@@ -119,11 +63,11 @@ For example, when using WIZnet Ethernet HAT :
 set(BOARD_NAME WIZnet_Ethernet_HAT)
 ```
 
-When using W5500-EVB-Pico :
+When using W55RP20-EVB-Pico :
 
 ```cpp
 # Set board
-set(BOARD_NAME W5500_EVB_PICO)
+set(BOARD_NAME W55RP20_EVB_PICO)
 ```
 
 3. Test
@@ -138,252 +82,110 @@ Please refer to 'README.md' in each example directory to find detail guide for t
 > git apply ./patches/0001_pico_sdk_clocks.patch
 > ```
 
-<a name="how_to_use_port_directory"></a>
-## How to use port directory
+## Step 1: Prepare hardware
 
-We moved the MCU dependent code to the port directory. The tree of port is shown below.
+If you are using W5100S-EVB-Pico, W5500-EVB-Pico, W55RP20-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2, you can skip '1. Combine...'
 
-```
-WIZnet-PICO-C
-┣ port
-    ┣ ioLibrary_Driver
-    ┃   ┣ inc
-    ┃   ┃   ┣ w5x00_gpio_irq.h
-    ┃   ┃   ┣ w5x00_spi.h
-    ┃   ┃   ┣ wiznet_spi.h
-    ┃   ┃   ┗ wiznet_spi_pio.h
-    ┃   ┗ src
-    ┃   ┃   ┣ w5x00_gpio_irq.c
-    ┃   ┃   ┣ w5x00_spi.c
-    ┃   ┃   ┣ w5x00_spi_pio.c
-    ┃   ┃   ┗ w5x00_spi_pio.pio
-    ┣ mbedtls
-    ┃   ┗ inc
-    ┃   ┃   ┗ ssl_config.h
-    ┣ timer
-    ┃   ┣ timer.c
-    ┃   ┗ timer.h
-    ┣ CMakeLists.txt
-    ┗ port_common.h
-```
+1. Combine WIZnet Ethernet HAT with Raspberry Pi Pico.
 
-- **ioLibrary_Driver**
+2. Connect ethernet cable to WIZnet Ethernet HAT, W5100S-EVB-Pico, W5500-EVB-Pico, W55RP20-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2 ethernet port.
 
-If you want to change things related to **SPI**, such as the SPI port number and SPI read/write function, or GPIO port number and function related to **interrupt** or use a different MCU without using the RP2040, you need to change the code in the '**WIZnet-PICO-C/port/ioLibrary_Driver/**' directory. Here is information about functions.
+3. Connect Raspberry Pi Pico, W5100S-EVB-Pico or W5500-EVB-Pico to desktop or laptop using 5 pin micro USB cable. W55RP20-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2 require a USB Type-C cable.
+
+
+
+## Step 2: Setup SNMP Example
+
+To test the SNMP example, minor settings shall be done in code.
+
+1. Setup SPI port and pin in 'w5x00_spi.h' in 'WIZnet-PICO-SNMP-C/port/ioLibrary_Driver/' directory.
+
+Setup the SPI interface you use.
+- If you use the W5100S-EVB-Pico, W5500-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2,
 
 ```cpp
-/* W5x00 */
-/*! \brief Set CS pin
- *  \ingroup w5x00_spi
- *
- *  Set chip select pin of spi0 to low(Active low).
- *
- *  \param none
- */
-static inline void wizchip_select(void);
+/* SPI */
+#define SPI_PORT spi0
 
-/*! \brief Set CS pin
- *  \ingroup w5x00_spi
- *
- *  Set chip select pin of spi0 to high(Inactive high).
- *
- *  \param none
- */
-static inline void wizchip_deselect(void);
+#define PIN_SCK 18
+#define PIN_MOSI 19
+#define PIN_MISO 16
+#define PIN_CS 17
+#define PIN_RST 20
+```
 
-/*! \brief Read from an SPI device, blocking
- *  \ingroup w5x00_spi
- *
- *  Set spi_read_blocking function.
- *  Read byte from SPI to rx_data buffer.
- *  Blocks until all data is transferred. No timeout, as SPI hardware always transfers at a known data rate.
- *
- *  \param none
- */
-static uint8_t wizchip_read(void);
+If you want to test with the SNMP example using SPI DMA, uncomment USE_SPI_DMA.
 
-/*! \brief Write to an SPI device, blocking
- *  \ingroup w5x00_spi
- *
- *  Set spi_write_blocking function.
- *  Write byte from tx_data buffer to SPI device.
- *  Blocks until all data is transferred. No timeout, as SPI hardware always transfers at a known data rate.
- *
- *  \param tx_data Buffer of data to write
- */
-static void wizchip_write(uint8_t tx_data);
+```cpp
+/* Use SPI DMA */
+//#define USE_SPI_DMA // if you want to use SPI DMA, uncomment.
+```
+- If you use the W55RP20-EVB-Pico,
+```cpp
+/* SPI */
+#define USE_SPI_PIO
 
-#ifdef USE_SPI_DMA
-/*! \brief Configure all DMA parameters and optionally start transfer
- *  \ingroup w5x00_spi
- *
- *  Configure all DMA parameters and read from DMA
- *
- *  \param pBuf Buffer of data to read
- *  \param len element count (each element is of size transfer_data_size)
- */
-static void wizchip_read_burst(uint8_t *pBuf, uint16_t len);
+#define PIN_SCK 21
+#define PIN_MOSI 23
+#define PIN_MISO 22
+#define PIN_CS 20
+#define PIN_RST 25
+```
 
-/*! \brief Configure all DMA parameters and optionally start transfer
- *  \ingroup w5x00_spi
- *
- *  Configure all DMA parameters and write to DMA
- *
- *  \param pBuf Buffer of data to write
- *  \param len element count (each element is of size transfer_data_size)
- */
-static void wizchip_write_burst(uint8_t *pBuf, uint16_t len);
-#endif
+2. Setup network configuration such as IP in 'w5x00_snmp.c' which is the SNMP example in 'WIZnet-PICO-SNMP-C/examples/snmp/' directory.
 
-/*! \brief Enter a critical section
- *  \ingroup w5x00_spi
- *
- *  Set ciritical section enter blocking function.
- *  If the spin lock associated with this critical section is in use, then this
- *  method will block until it is released.
- *
- *  \param none
- */
-static void wizchip_critical_section_lock(void);
+Setup IP and other network settings to suit your network environment.
 
-/*! \brief Release a critical section
- *  \ingroup w5x00_spi
- *
- *  Set ciritical section exit function.
- *  Release a critical section.
- *
- *  \param none
- */
-static void wizchip_critical_section_unlock(void);
-
-/*! \brief Initialize SPI instances and Set DMA channel
- *  \ingroup w5x00_spi
- *
- *  Set GPIO to spi0.
- *  Puts the SPI into a known state, and enable it.
- *  Set DMA channel completion channel.
- *
- *  \param none
- */
-void wizchip_spi_initialize(void);
-
-/*! \brief Initialize a critical section structure
- *  \ingroup w5x00_spi
- *
- *  The critical section is initialized ready for use.
- *  Registers callback function for critical section for WIZchip.
- *
- *  \param none
- */
-void wizchip_cris_initialize(void);
-
-/*! \brief W5x00 chip reset
- *  \ingroup w5x00_spi
- *
- *  Set a reset pin and reset.
- *
- *  \param none
- */
-void wizchip_reset(void);
-
-/*! \brief Initialize WIZchip
- *  \ingroup w5x00_spi
- *
- *  Set callback function to read/write byte using SPI.
- *  Set callback function for WIZchip select/deselect.
- *  Set memory size of W5x00 chip and monitor PHY link status.
- *
- *  \param none
- */
-void wizchip_initialize(void);
-
-/*! \brief Check chip version
- *  \ingroup w5x00_spi
- *
- *  Get version information.
- *
- *  \param none
- */
-void wizchip_check(void);
-
+```cpp
 /* Network */
-/*! \brief Initialize network
- *  \ingroup w5x00_spi
- *
- *  Set network information.
- *
- *  \param net_info network information.
- */
-void network_initialize(wiz_NetInfo net_info);
-
-/*! \brief Print network information
- *  \ingroup w5x00_spi
- *
- *  Print network information about MAC address, IP address, Subnet mask, Gateway, DHCP and DNS address.
- *
- *  \param net_info network information.
- */
-void print_network_information(wiz_NetInfo net_info);
+static wiz_NetInfo g_net_info =
+    {
+        .mac = {0x00, 0x08, 0xDC, 0x12, 0x34, 0x56}, // MAC address
+        .ip = {192, 168, 11, 2},                     // IP address
+        .sn = {255, 255, 255, 0},                    // Subnet Mask
+        .gw = {192, 168, 11, 1},                     // Gateway
+        .dns = {8, 8, 8, 8},                         // DNS server
+        .dhcp = NETINFO_STATIC                       // DHCP enable/disable
+};
 ```
+
+3. Setup SNMP configuration in 'w5x00_snmp.c' in 'WIZnet-PICO-SNMP-C/examples/snmp/' directory.
 
 ```cpp
-/* GPIO */
-/*! \brief Initialize w5x00 gpio interrupt callback function
- *  \ingroup w5x00_gpio_irq
- *
- *  Add a w5x00 interrupt callback.
- *
- *  \param socket socket number
- *  \param callback the gpio interrupt callback function
- */
-void wizchip_gpio_interrupt_initialize(uint8_t socket, void (*callback)(void));
+/* SNMP */
+uint8_t manager[4] = {192, 168, 11, 162}; // manager ip, (is your pc ip or others managers)
 
-/*! \brief Assign gpio interrupt callback function
- *  \ingroup w5x00_gpio_irq
- *
- *  GPIO interrupt callback function.
- *
- *  \param gpio Which GPIO caused this interrupt
- *  \param events Which events caused this interrupt. See \ref gpio_set_irq_enabled for details.
- */
-static void wizchip_gpio_interrupt_callback(uint gpio, uint32_t events);
 ```
 
-- **timer**
+## Step 3: Build
 
-If you want to change things related to the **timer**. Also, if you use a different MCU without using the RP2040, you need to change the code in the '**WIZnet-PICO-C/port/timer/**' directory. Here is information about functions.
+1. After completing the SNMP example configuration, click 'build' in the status bar at the bottom of Visual Studio Code or press the 'F7' button on the keyboard to build.
 
-```cpp
-/* Timer */
-/*! \brief Initialize timer callback function
- *  \ingroup timer
- *
- *  Add a repeating timer that is called repeatedly at the specified interval in microseconds.
- *
- *  \param callback the repeating timer callback function
- */
-void wizchip_1ms_timer_initialize(void (*callback)(void));
+2. When the build is completed, 'w5x00_snmp.uf2' is generated in 'WIZnet-PICO-SNMP-C/build/examples/snmp/' directory.
 
-/*! \brief Assign timer callback function
- *  \ingroup timer
- *
- *  1ms timer callback function.
- *
- *  \param t Information about a repeating timer
- */
-bool wizchip_1ms_timer_callback(struct repeating_timer *t);
 
-/* Delay */
-/*! \brief Wait for the given number of milliseconds before returning
- *  \ingroup timer
- *
- *  This method attempts to perform a lower power sleep (using WFE) as much as possible.
- *
- *  \param ms the number of milliseconds to sleep
- */
-void wizchip_delay_ms(uint32_t ms);
-```
 
+## Step 4: Upload and Run
+
+1. While pressing the BOOTSEL button of Raspberry Pi Pico, W5100S-EVB-Pico, W5500-EVB-Pico, W55RP20-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2 power on the board, the USB mass storage 'RPI-RP2' is automatically mounted.
+
+![][link-raspberry_pi_pico_usb_mass_storage]
+
+2. Drag and drop 'w5x00_snmp.uf2' onto the USB mass storage device 'RPI-RP2'.
+
+3. Connect to the serial COM port of Raspberry Pi Pico, W5100S-EVB-Pico, W5500-EVB-Pico, W55RP20-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2 with Tera Term.
+
+![][link-connect_to_serial_com_port]
+
+4. Reset your board.
+
+5. If the SNMP example works normally on Raspberry Pi Pico, W5100S-EVB-Pico, W5500-EVB-Pico, W55RP20-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2, you can see the network information of Raspberry Pi Pico, W5100S-EVB-Pico, W5500-EVB-Pico, W55RP20-EVB-Pico, W5100S-EVB-Pico2 or W5500-EVB-Pico2 and the SNMP is open.
+
+![][link-snmp]
+
+6. Enter a command at the terminal to control the light on and off. If there is an error in sending the command, it is likely that Net-SNMP is not installed or the command is wrong.
+
+![][link-snmp_connect]
 
 
 <!--
@@ -400,25 +202,11 @@ Link
 [link-wiznet_ethernet_hat]: https://docs.wiznet.io/Product/Open-Source-Hardware/wiznet_ethernet_hat
 [link-w5100s-evb-pico]: https://docs.wiznet.io/Product/iEthernet/W5100S/w5100s-evb-pico
 [link-w5500-evb-pico]: https://docs.wiznet.io/Product/iEthernet/W5500/w5500-evb-pico
-[link-dhcp_dns]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/dhcp_dns
-[link-ftp]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/ftp
-[link-ftp_client]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/ftp/client
-[link-ftp_server]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/ftp/server
-[link-http]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/http
-[link-http_server]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/http/server
-[link-loopback]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/loopback
-[link-mqtt]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/mqtt
-[link-mqtt_publish]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/mqtt/publish
-[link-mqtt_publish_subscribe]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/mqtt/publish_subscribe
-[link-mqtt_subscribe]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/mqtt/subscribe
-[link-sntp]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/sntp
-[link-tcp_client_over_ssl]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/examples/tcp_client_over_ssl
-[link-iolibrary_driver]: https://github.com/Wiznet/ioLibrary_Driver
-[link-mbedtls]: https://github.com/ARMmbed/mbedtls
-[link-pico_sdk]: https://github.com/raspberrypi/pico-sdk
-[link-port_iolibrary_driver]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/port/ioLibrary_Driver
-[link-port_mbedtls]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/port/mbedtls
-[link-port_timer]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/main/port/timer
-[link-wiznet_pico_c_1_0_0_version]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/tree/1.0.0
 [link-w5100s-evb-pico2]: https://docs.wiznet.io/Product/iEthernet/W5100S/w5100s-evb-pico2
 [link-w5500-evb-pico2]: https://docs.wiznet.io/Product/iEthernet/W5500/w5500-evb-pico2
+[link-tera_term]: https://osdn.net/projects/ttssh2/releases/
+[link-hercules]: https://www.hw-group.com/software/hercules-setup-utility
+[link-raspberry_pi_pico_usb_mass_storage]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/blob/main/static/images/loopback/raspberry_pi_pico_usb_mass_storage.png
+[link-connect_to_serial_com_port]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-C/blob/main/static/images/loopback/connect_to_serial_com_port.png
+[link-snmp]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-SNMP-C/blob/main/static/images/snmp/snmp.png
+[link-snmp_connect]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-SNMP-C/blob/main/static/images/snmp/snmp_connect.png
