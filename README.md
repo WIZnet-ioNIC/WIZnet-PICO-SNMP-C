@@ -183,7 +183,7 @@ uint8_t manager[4] = {192, 168, 11, 162}; // manager ip, (is your pc ip or other
 
 ![][link-snmp]
 
-6. Enter a command at the terminal to control the light on and off. If there is an error in sending the command, it is likely that Net-SNMP is not installed or the command is wrong.
+6. Enter a command at the terminal to control the User LED on and off. If there is an error in sending the command, it is likely that Net-SNMP is not installed or the command is wrong.
 
 ![][link-snmp_connect]
 
